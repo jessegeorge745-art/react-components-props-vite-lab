@@ -1,9 +1,6 @@
-# models/__init__.py
-# Exposes all model classes at the package level.
+# lib/__init__.py
+from lib.user import User
+from lib.project import Project
+from lib.task import Task
 
-from models.person import Person
-from models.task import Task
-from models.project import Project
-from models.user import User
-
-__all__ = ["Person", "Task", "Project", "User"]
+__all__ = ["User", "Project", "Task"]
