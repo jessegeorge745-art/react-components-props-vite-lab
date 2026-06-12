@@ -1,5 +1,5 @@
 # utils/display.py
-# Terminal output using the rich package for clean, readable tables.
+# Pretty-prints users, projects, and tasks using the `rich` library.
 
 from rich.console import Console
 from rich.table import Table
@@ -8,78 +8,91 @@ from rich import box
 console = Console()
 
 
-def print_success(msg):
-    console.print(f"[bold green]✔  {msg}[/bold green]")
-
-
-def print_error(msg):
-    console.print(f"[bold red]✘  {msg}[/bold red]")
-
-
-def print_info(msg):
-    console.print(f"[bold cyan]ℹ  {msg}[/bold cyan]")
-
-
-def show_users(users):
-    """Display all users in a table."""
+def display_users(users: list) -> None:
+    """Print all users in a rich table."""
     if not users:
-        print_info("No users found.")
+        console.print("[yellow]No users found.[/yellow]")
         return
 
-    table = Table(title="Users", box=box.ROUNDED)
-    table.add_column("Name", style="bold white")
-    table.add_column("Email", style="cyan")
+    table = Table(title="Users", box=box.ROUNDED, show_lines=True)
+    table.add_column("#", style="dim", width=4)
+    table.add_column("Name", style="bold cyan")
+    table.add_column("Email", style="blue")
     table.add_column("Role", style="magenta")
-    table.add_column("Projects", justify="right")
+    table.add_column("Projects", justify="center")
 
-    for user in users:
-        table.add_row(user.name, user.email, user.role, str(len(user.projects)))
-
-    console.print(table)
-
-
-def show_projects(user):
-    """Display all projects for a user in a table."""
-    if not user.projects:
-        print_info(f"No projects found for '{user.name}'.")
-        return
-
-    table = Table(title=f"Projects — {user.name}", box=box.ROUNDED)
-    table.add_column("Title", style="bold white")
-    table.add_column("Description", style="white")
-    table.add_column("Due Date", style="yellow")
-    table.add_column("Progress", style="green")
-
-    for project in user.projects:
-        total = len(project.tasks)
-        done = sum(1 for t in project.tasks if t.status == "complete")
+    for i, user in enumerate(users, 1):
         table.add_row(
-            project.title,
-            project.description or "—",
-            project.due_date or "—",
-            f"{done}/{total} complete",
+            str(i),
+            user.name,
+            user.email,
+            user.role,
+            str(len(user.projects)),
         )
 
     console.print(table)
 
 
-def show_tasks(project):
-    """Display all tasks for a project in a table."""
-    if not project.tasks:
-        print_info(f"No tasks found for '{project.title}'.")
+def display_projects(user) -> None:
+    """Print all projects belonging to a user."""
+    if not user.projects:
+        console.print(f"[yellow]No projects found for '{user.name}'.[/yellow]")
         return
 
-    table = Table(title=f"Tasks — {project.title}", box=box.ROUNDED)
-    table.add_column("Title", style="bold white")
-    table.add_column("Assigned To", style="cyan")
-    table.add_column("Status", style="magenta")
+    table = Table(
+        title=f"Projects — {user.name}",
+        box=box.ROUNDED,
+        show_lines=True,
+    )
+    table.add_column("#", style="dim", width=4)
+    table.add_column("Title", style="bold cyan")
+    table.add_column("Description", style="white")
+    table.add_column("Due Date", style="blue")
+    table.add_column("Progress", justify="center")
 
-    for task in project.tasks:
-        color = "green" if task.status == "complete" else "yellow"
+    for i, project in enumerate(user.projects, 1):
+        total = len(project.tasks)
+        done = sum(1 for t in project.tasks if t.status == "complete")
+        progress = f"{done}/{total}" if total else "[dim]—[/dim]"
         table.add_row(
+            str(i),
+            project.title,
+            project.description or "[dim]—[/dim]",
+            project.due_date or "[dim]—[/dim]",
+            progress,
+        )
+
+    console.print(table)
+
+
+def display_tasks(project) -> None:
+    """Print all tasks inside a project."""
+    if not project.tasks:
+        console.print(f"[yellow]No tasks found in project '{project.title}'.[/yellow]")
+        return
+
+    table = Table(
+        title=f"Tasks — {project.title}",
+        box=box.ROUNDED,
+        show_lines=True,
+    )
+    table.add_column("#", style="dim", width=4)
+    table.add_column("Title", style="bold cyan")
+    table.add_column("Assigned To", style="blue")
+    table.add_column("Status", justify="center")
+
+    STATUS_STYLE = {
+        "complete": "[bold green]COMPLETE[/bold green]",
+        "pending":  "[yellow]PENDING[/yellow]",
+    }
+
+    for i, task in enumerate(project.tasks, 1):
+        status_display = STATUS_STYLE.get(task.status, task.status.upper())
+        table.add_row(
+            str(i),
             task.title,
             task.assigned_to,
-            f"[{color}]{task.status.upper()}[/{color}]",
+            status_display,
         )
 
     console.print(table)
